@@ -13,14 +13,16 @@
       <form id="location-form" method="post" action="/">
         <input id="location-input" type="text" name="location" placeholder="Please input a location.">
         <input id="location-button" type="button" value="submit">
+        <div id="error-flash"></div>
       </form>
     </div>
 
     <div id="map"></div>
 
+  <script src="./data/indego.json"></script>
   <script src="./js/main.js"></script>
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC87bAzg2HQb3-tE6uUeib_10VMmMdU1kY">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC87bAzg2HQb3-tE6uUeib_10VMmMdU1kY&libraries=geometry">
     </script>
   </body>
 </html>
