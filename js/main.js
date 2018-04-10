@@ -3,6 +3,7 @@
 const locationInput = document.querySelector("#location-input");
 const locationButton = document.querySelector("#location-button");
 const errorFlash = document.querySelector("#error-flash");
+const stationsList = document.querySelector("#stations-list");
 
 let map;
 let markers = [];
@@ -10,8 +11,8 @@ let closestStations = [];
 
 // if user submits a location:
 locationButton.addEventListener("click", function(event) {
-  // prevent page reload on form submission
   event.preventDefault();
+
   // clear the error box just in case
   errorFlash.textContent = ("");
 
@@ -32,7 +33,7 @@ locationButton.addEventListener("click", function(event) {
           let userLatLng = [
             results[0].geometry.location.lat(),
             results[0].geometry.location.lng()
-          ]
+          ];
           console.log(`User's coordinates are: ${userLatLng}`);
 
           // draw map
@@ -40,9 +41,13 @@ locationButton.addEventListener("click", function(event) {
 
           // grab closest stations
           closestStations = getClosestStations(userLatLng);
+          console.log('Closest stations:');
           console.log(closestStations);
 
-          // add markers
+          // render a list of closest stations
+          listClosestStations(closestStations);
+
+          // add user and closest station markers to map
           markClosestStations(userLatLng, closestStations);
 
         } else {
@@ -161,11 +166,13 @@ function getClosestStations(latLng) {
     );
 
     let distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, stationLatLng);
+
     // grab all Indego stations within one kilometer
     if (distance < 1000) {
       result.push(stations.features[station])
     }
   };
+
   if (result.length > 0) {
     console.log(result.length + ' station' + (result.length == 1 ? '' : 's ') + 'found within walking distance!')
     return result;
@@ -208,7 +215,43 @@ function getClosestStations(latLng) {
       result[i] = sortedStations[i];
     }
     return result;
-  }
+  };
+};
+
+function listClosestStations(stationsObject){
+
+  // iterate through each closest station
+  Object.keys(stationsObject).map(function(objectKey, index) {
+    let stationsListItem = document.createElement("LI");
+
+    // set up the html element and add it to the DOM
+    stationsListItem.setAttribute("id", `btn-${objectKey}`);
+    stationsListItem.setAttribute("value", `${objectKey}`);
+    stationsListItem.innerHTML = [
+      `<p>${stationsObject[index].properties.name}</p>`,
+      `<p>address: ${stationsObject[index].properties.addressStreet}</p>`,
+      `<p>bikes available: ${stationsObject[index].properties.bikesAvailable}</p>`,
+      `<p>open docks: ${stationsObject[index].properties.docksAvailable}</p>`,
+    ]
+     .join("");
+    stationsList.appendChild(stationsListItem);
+
+    // add a click listener to each list item
+    stationsListItem.addEventListener('click', function(){
+        // toggle "active" class for styling
+        let active = document.querySelector('.active');
+        if (active) {
+          active.classList.remove('active');
+          markers[index+1].setAnimation(null);
+        }
+        event.currentTarget.classList.toggle('active');
+        // make the marker bounce for 3 seconds
+        markers[index+1].setAnimation(google.maps.Animation.BOUNCE);
+        window.setTimeout(function() {
+          markers[index+1].setAnimation(null);
+        }, 3000);
+    })
+  });
 };
 
 function markClosestStations(latLng, stationsObject){
@@ -220,6 +263,7 @@ function markClosestStations(latLng, stationsObject){
           map: map,
           title: 'User Marker'
         });
+        
   // add the user's marker to the master list of markers
   markers.push(userMarker);
 
@@ -241,15 +285,14 @@ function markClosestStations(latLng, stationsObject){
 
     // add each marker to the master list of markers
     markers.push(marker);
+    console.log("markers:");
+    console.log(markers);
 
     // add a helper function to zoom in on each marker
     marker.addListener('click', function() {
           map.setZoom(14);
           map.setCenter(marker.getPosition());
         });
-    // console.log(stationsObject[index].geometry)
-    // console.log(stationsObject[index].properties.addressStreet)
-    // console.log(`${stationsObject[index].properties.bikesAvailable} bikes available`)
   });
 
   // now for some quality of life map adjustments 😊
