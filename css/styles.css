@@ -20,3 +20,7 @@ p {
 li.active {
   background-color: grey;
 }
+
+nav.div {
+  display: inline-block;
+}

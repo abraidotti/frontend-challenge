@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <title>Philly Bike Finder</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css?family=Eczar|Gentium+Basic" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css">
-    <link rel="stylesheet" href="./css/styles.css">
-  </head>
-  <body>
 
-    <nav>
-      <div id="warning-container"></div>
-    </nav>
+<head>
+  <meta charset="utf-8">
+  <title>Philly Bike Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css?family=Eczar|Gentium+Basic" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+
+<body>
+
+  <nav>
+
+    <div id="nav-header">
+      <p>Philly Bike Finder</p>
+    </div>
+
     <div id="location-form-container">
       <form id="location-form" method="post" action="/">
         <input id="location-input" type="text" name="location" placeholder="Please input a location.">
@@ -21,19 +26,23 @@
       </form>
     </div>
 
-    <div id="weather-container"></div>
+  </nav>
 
-    <div id="map"></div>
+  <div id="weather-container"></div>
 
-    <div id="stations-container">
-      <ul id="stations-list">
-      </ul>
-    </div>
+  <div id="message-container"></div>
+
+  <div id="map"></div>
+
+  <div id="stations-container">
+    <ul id="stations-list">
+    </ul>
+  </div>
 
   <script src="./data/indego.json"></script>
   <script src="./js/main.js"></script>
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC87bAzg2HQb3-tE6uUeib_10VMmMdU1kY&libraries=geometry">
-    </script>
-  </body>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC87bAzg2HQb3-tE6uUeib_10VMmMdU1kY&libraries=geometry">
+  </script>
+</body>
+
 </html>

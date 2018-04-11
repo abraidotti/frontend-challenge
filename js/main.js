@@ -6,7 +6,7 @@ const locationButton = document.querySelector("#location-button");
 const errorContainer = document.querySelector("#error-container");
 const stationsList = document.querySelector("#stations-list");
 const weatherContainer = document.querySelector("#weather-container");
-const warningContainer = document.querySelector("#warning-container");
+const messageContainer = document.querySelector("#message-container");
 
 // if user submits a location:
 locationButton.addEventListener('click', function(event) {
@@ -35,7 +35,7 @@ locationButton.addEventListener('click', function(event) {
           // clear DOM elements
           stationsList.innerHTML = '';
           weatherContainer.innerHTML = '';
-          warningContainer.innerHTML = '';
+          messageContainer.innerHTML = '';
 
           console.log('Location found and validated.');
           let userLatLng = [
@@ -108,13 +108,15 @@ function renderForecast(forecast){
   weatherContainer.appendChild(weatherBox);
 
   if (forecast.weather[0].icon.includes('09' || '10' || '11' || '13')) {
-    let warningBox = document.createElement("DIV");
-    warningBox.innerHTML = ('<p>Warning: precipitation expected!</p>');
-    warningContainer.appendChild(warningBox);
-    console.log('warning logged to DOM')
+    let messageBox = document.createElement("DIV");
+    messageBox.setAttribute('id', 'weather-message');
+    messageBox.setAttribute('class', 'message-warning');
+    messageBox.innerHTML = ('<p>Precipitation expected!</p>');
+    messageContainer.appendChild(messageBox);
+    console.log('message logged to DOM')
   };
 
-  console.log("Weather conditions rendered.");
+  console.log('Weather conditions rendered.');
 
 }
 
@@ -241,12 +243,20 @@ function getClosestStations(latLng) {
 
   if (result.length > 0) {
     console.log(result.length + ' station' + (result.length == 1 ? '' : 's ') + 'found within walking distance!')
-    return result;
-  }
+    let messageBox = document.createElement('DIV');
+    messageBox.setAttribute('class', 'message-friendly');
+    messageBox.innerHTML = `${result.length} station${result.length == 1 ? '' : 's '} found within walking distance!`
+    messageContainer.appendChild(messageBox);
+  };
 
   if (result.length <= 0) {
-    console.log("No Indego stations found within walking distance. :(");
-    console.log("Mapping closest stations instead.");
+    let messageBox = document.createElement('DIV');
+    messageBox.setAttribute('class', 'message-warning');
+    messageBox.innerHTML = [
+      '<p>No stations found within walking distance!</p>',
+      '<p>Marking three closest stations instead.</p>'
+    ].join('');
+    messageContainer.appendChild(messageBox);
 
     // no stations found within 1km, so let's grab the closest by distance
     // map stations to a temporary array with index and sort value
@@ -280,9 +290,11 @@ function getClosestStations(latLng) {
     for(let i = 0; i < 3; i++){
       result[i] = sortedStations[i];
     }
-    return result;
   };
+
+  return result;
 };
+
 
 function listClosestStations(stationsObject, markerArray){
 
@@ -298,8 +310,7 @@ function listClosestStations(stationsObject, markerArray){
       `<p>address: ${stationsObject[index].properties.addressStreet}</p>`,
       `<p>bikes available: ${stationsObject[index].properties.bikesAvailable}</p>`,
       `<p>open docks: ${stationsObject[index].properties.docksAvailable}</p>`,
-    ]
-     .join("");
+    ].join('');
     stationsList.appendChild(stationsListItem);
 
     // add a click listener to each list item
