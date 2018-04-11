@@ -1,62 +1,74 @@
 (function() {
 
+const locationFormContainer = document.querySelector("#location-form-container");
 const locationInput = document.querySelector("#location-input");
 const locationButton = document.querySelector("#location-button");
-const errorFlash = document.querySelector("#error-flash");
+const errorContainer = document.querySelector("#error-container");
 const stationsList = document.querySelector("#stations-list");
-
-let map;
-let markers = [];
-let closestStations = [];
+const weatherContainer = document.querySelector("#weather-container");
+const warningContainer = document.querySelector("#warning-container");
 
 // if user submits a location:
-locationButton.addEventListener("click", function(event) {
+locationButton.addEventListener('click', function(event) {
   event.preventDefault();
 
   // clear the error box just in case
-  errorFlash.textContent = ("");
+  errorContainer.textContent = '';
 
   // if the input value is not blank:
   if (locationInput.value) {
-    // geocode the input value
+
     let geocoder = new google.maps.Geocoder();
+
+    // geocode the input value
     geocoder.geocode({
       address: locationInput.value
     }, function(results, status) {
-      if (status === "OK") {
+      if (status === 'OK') {
         console.log(`Location searched: ${results[0].formatted_address}`)
 
         // check if the address is in Philly proper
-        if (results[0].formatted_address.includes("Philadelphia, PA")){
+        if (results[0].formatted_address.includes('Philadelphia, PA')){
 
-          console.log("Location found and validated.");
+          let map;
+
+          // clear DOM elements
+          stationsList.innerHTML = '';
+          weatherContainer.innerHTML = '';
+          warningContainer.innerHTML = '';
+
+          console.log('Location found and validated.');
           let userLatLng = [
             results[0].geometry.location.lat(),
             results[0].geometry.location.lng()
           ];
           console.log(`User's coordinates are: ${userLatLng}`);
 
+          let forecast = promiseToGetWeather();
+
           // draw map
           initMap(userLatLng);
 
           // grab closest stations
-          closestStations = getClosestStations(userLatLng);
+          let closestStations = getClosestStations(userLatLng);
           console.log('Closest stations:');
           console.log(closestStations);
 
-          // render a list of closest stations
-          listClosestStations(closestStations);
-
           // add user and closest station markers to map
-          markClosestStations(userLatLng, closestStations);
+          let markers = markClosestStations(userLatLng, closestStations);
+          console.log('markers: ');
+          console.log(markers);
+
+          // render a list of closest stations
+          listClosestStations(closestStations, markers);
 
         } else {
           // let the user try again
-          console.log("Location not in Philadelphia.");
-          errorFlash.textContent = ("Please input a location in Philadelphia, PA.");
+          console.log('Location not in Philadelphia.');
+          errorContainer.textContent = ('Please input a location in Philadelphia, PA.');
         }
       } else {
-        alert("Geocode was not successful for the following reason: " + status);
+        alert('Geocode was not successful for the following reason: ' + status);
       };
     });
   } else {
@@ -64,6 +76,60 @@ locationButton.addEventListener("click", function(event) {
     console.log('No location submitted.');
   }
 });
+
+// get weather forecast
+function promiseToGetWeather(){
+  new Promise(function(resolve) {
+    setTimeout(function() {
+      forecast = getForecast();
+      resolve(forecast);
+    }, 300);
+  })
+  .then(function(forecast){
+    renderForecast(forecast);
+  })
+  .catch(function(error) {
+    console.error(error);
+  });
+}
+
+function renderForecast(forecast){
+  let weatherBox = document.createElement("DIV");
+
+  // set up the html element and add it to the DOM
+  weatherBox.setAttribute("id", "weather-box");
+  console.log("forecast: ");
+  console.log(forecast);
+  weatherBox.innerHTML = [
+    `<p>today's condition: </p>`,
+    `<p>${forecast.weather[0].description}</p>`,
+    `<img src=http://openweathermap.org/img/w/${forecast.weather[0].icon}.png alt="weather icon">`
+  ].join("");
+  weatherContainer.appendChild(weatherBox);
+
+  if (forecast.weather[0].icon.includes('09' || '10' || '11' || '13')) {
+    let warningBox = document.createElement("DIV");
+    warningBox.innerHTML = ('<p>Warning: precipitation expected!</p>');
+    warningContainer.appendChild(warningBox);
+    console.log('warning logged to DOM')
+  };
+
+  console.log("Weather conditions rendered.");
+
+}
+
+
+function getForecast(){
+  return fetch('http://api.openweathermap.org/data/2.5/weather?q=Philadelphia,USA&APPID=d9999db4a33a6a734f1a2e0a30556290')
+  .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      }
+  })
+  .catch(function(error) {
+    console.error(error)
+  });
+};
 
 function initMap(latLng) {
   // draw a map in night mode
@@ -218,7 +284,7 @@ function getClosestStations(latLng) {
   };
 };
 
-function listClosestStations(stationsObject){
+function listClosestStations(stationsObject, markerArray){
 
   // iterate through each closest station
   Object.keys(stationsObject).map(function(objectKey, index) {
@@ -242,30 +308,30 @@ function listClosestStations(stationsObject){
         let active = document.querySelector('.active');
         if (active) {
           active.classList.remove('active');
-          markers[index+1].setAnimation(null);
+          markerArray[index+1].setAnimation(null);
         }
         event.currentTarget.classList.toggle('active');
         // make the marker bounce for 3 seconds
-        markers[index+1].setAnimation(google.maps.Animation.BOUNCE);
+        markerArray[index+1].setAnimation(google.maps.Animation.BOUNCE);
         window.setTimeout(function() {
-          markers[index+1].setAnimation(null);
-        }, 3000);
+          markerArray[index+1].setAnimation(null);
+        }, 2000);
     })
   });
 };
 
 function markClosestStations(latLng, stationsObject){
   console.log(stationsObject);
-
+  let markerArray = [];
   // mark the user's location
   let userMarker = new google.maps.Marker({
           position: {lat: latLng[0], lng:latLng[1]},
           map: map,
           title: 'User Marker'
         });
-        
+
   // add the user's marker to the master list of markers
-  markers.push(userMarker);
+  markerArray.push(userMarker);
 
   // mark each closest station
   Object.keys(stationsObject).map(function(objectKey, index) {
@@ -276,30 +342,28 @@ function markClosestStations(latLng, stationsObject){
 
     let bikes = `${stationsObject[index].properties.bikesAvailable}`;
 
-    var marker = new google.maps.Marker({
+    let marker = new google.maps.Marker({
             position: coordinates,
             map: map,
             label: bikes,
             title: `Closest station ${index}`
     });
 
-    // add each marker to the master list of markers
-    markers.push(marker);
-    console.log("markers:");
-    console.log(markers);
-
     // add a helper function to zoom in on each marker
     marker.addListener('click', function() {
           map.setZoom(14);
           map.setCenter(marker.getPosition());
-        });
+    });
+
+    // add each marker to the master list of markers
+    markerArray.push(marker);
   });
 
   // now for some quality of life map adjustments 😊
   // let the markers dictate the map bounds
   let bounds = new google.maps.LatLngBounds();
-  for(i=0;i<markers.length;i++) {
-    bounds.extend(markers[i].getPosition());
+  for(i=0;i<markerArray.length;i++) {
+    bounds.extend(markerArray[i].getPosition());
   }
   // center the map to the markers
   map.setCenter(bounds.getCenter());
@@ -311,6 +375,7 @@ function markClosestStations(latLng, stationsObject){
   if(map.getZoom()> 16){
     map.setZoom(16);
   }
+  return markerArray;
 };
 
 })();

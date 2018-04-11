@@ -9,18 +9,24 @@
     <link rel="stylesheet" href="./css/styles.css">
   </head>
   <body>
+
+    <nav>
+      <div id="warning-container"></div>
+    </nav>
     <div id="location-form-container">
       <form id="location-form" method="post" action="/">
         <input id="location-input" type="text" name="location" placeholder="Please input a location.">
         <input id="location-button" type="button" value="submit">
-        <div id="error-flash"></div>
+        <div id="error-container"></div>
       </form>
     </div>
+
+    <div id="weather-container"></div>
 
     <div id="map"></div>
 
     <div id="stations-container">
-      <ul id="stations-list">  
+      <ul id="stations-list">
       </ul>
     </div>
 
