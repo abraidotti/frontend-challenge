@@ -7,6 +7,7 @@ const errorContainer = document.querySelector("#error-container");
 const stationsList = document.querySelector("#stations-list");
 const weatherContainer = document.querySelector("#weather-container");
 const messageContainer = document.querySelector("#message-container");
+const warningContainer = document.querySelector("#warning-container");
 
 // if user submits a location:
 locationButton.addEventListener('click', function(event) {
@@ -51,7 +52,7 @@ locationButton.addEventListener('click', function(event) {
 
           // grab closest stations
           let closestStations = getClosestStations(userLatLng);
-          console.log('Closest stations:');
+          console.log('closest stations: ');
           console.log(closestStations);
 
           // add user and closest station markers to map
@@ -65,10 +66,10 @@ locationButton.addEventListener('click', function(event) {
         } else {
           // let the user try again
           console.log('Location not in Philadelphia.');
-          errorContainer.textContent = ('Please input a location in Philadelphia, PA.');
+          errorContainer.innerHTML = ('<p>Please input a location in Philadelphia, PA.</p>');
         }
       } else {
-        alert('Geocode was not successful for the following reason: ' + status);
+        errorContainer.innerHTML = (`<p>Geocode error: ${status}</p>`);
       };
     });
   } else {
@@ -77,7 +78,6 @@ locationButton.addEventListener('click', function(event) {
   }
 });
 
-// get weather forecast
 function promiseToGetWeather(){
   new Promise(function(resolve) {
     setTimeout(function() {
@@ -100,26 +100,29 @@ function renderForecast(forecast){
   weatherBox.setAttribute("id", "weather-box");
   console.log("forecast: ");
   console.log(forecast);
+
+  // smooth out weather conditions and temperature
+  let conditions = forecast.weather[0].description.charAt(0).toUpperCase() + forecast.weather[0].description.slice(1);
+  let temp = Math.round((9/5) * (forecast.main.temp - 273) + 32);
+
+  // render weather to a DOM element
   weatherBox.innerHTML = [
-    `<p>today's condition: </p>`,
-    `<p>${forecast.weather[0].description}</p>`,
-    `<img src=http://openweathermap.org/img/w/${forecast.weather[0].icon}.png alt="weather icon">`
+    `<img src=http://openweathermap.org/img/w/${forecast.weather[0].icon}.png alt="weather icon">`,
+    `<h2>${temp}°</h2>`,
+    `<p>${conditions} today.</p>`,
   ].join("");
   weatherContainer.appendChild(weatherBox);
+  console.log('Weather rendered.');
 
   if (forecast.weather[0].icon.includes('09' || '10' || '11' || '13')) {
     let messageBox = document.createElement("DIV");
     messageBox.setAttribute('id', 'weather-message');
     messageBox.setAttribute('class', 'message-warning');
-    messageBox.innerHTML = ('<p>Precipitation expected!</p>');
-    messageContainer.appendChild(messageBox);
-    console.log('message logged to DOM')
+    messageBox.innerHTML = ('<h2>Stay alert for bad weather!</h2>');
+    warningContainer.appendChild(messageBox);
+    console.log('Weather warning rendered.');
   };
-
-  console.log('Weather conditions rendered.');
-
-}
-
+};
 
 function getForecast(){
   return fetch('http://api.openweathermap.org/data/2.5/weather?q=Philadelphia,USA&APPID=d9999db4a33a6a734f1a2e0a30556290')
@@ -137,7 +140,7 @@ function initMap(latLng) {
   // draw a map in night mode
     map = new google.maps.Map(document.getElementById('map'), {
     center: {lat: latLng[0], lng: latLng[1]},
-    zoom: 14,
+    zoom: 12,
     styles: [
       {elementType: 'geometry', stylers: [{color: '#242f3e'}]},
       {elementType: 'labels.text.stroke', stylers: [{color: '#242f3e'}]},
@@ -222,7 +225,6 @@ function initMap(latLng) {
 };
 
 function getClosestStations(latLng) {
-
   let userLatLng = new google.maps.LatLng(latLng[0], latLng[1]);
   let result = [];
 
@@ -238,23 +240,25 @@ function getClosestStations(latLng) {
     // grab all Indego stations within one kilometer
     if (distance < 1000) {
       result.push(stations.features[station])
-    }
+    };
   };
 
-  if (result.length > 0) {
-    console.log(result.length + ' station' + (result.length == 1 ? '' : 's ') + 'found within walking distance!')
+  if (result.length >= 3) {
     let messageBox = document.createElement('DIV');
     messageBox.setAttribute('class', 'message-friendly');
-    messageBox.innerHTML = `${result.length} station${result.length == 1 ? '' : 's '} found within walking distance!`
+    messageBox.innerHTML = [
+      `<p>${result.length} stations found within walking distance!</p>`,
+      `<p>Click on a station below to highlight it on the map.</p>`
+    ].join('');
     messageContainer.appendChild(messageBox);
   };
 
-  if (result.length <= 0) {
+  if (result.length <= 2) {
     let messageBox = document.createElement('DIV');
     messageBox.setAttribute('class', 'message-warning');
     messageBox.innerHTML = [
-      '<p>No stations found within walking distance!</p>',
-      '<p>Marking three closest stations instead.</p>'
+      '<p>Three closest stations found.</p>',
+      '<p>Click on a station below to highlight it on the map.</p>'
     ].join('');
     messageContainer.appendChild(messageBox);
 
@@ -268,16 +272,16 @@ function getClosestStations(latLng) {
 
       // sort value with Google Maps API's distance calculation
       return { index: index, value: google.maps.geometry.spherical.computeDistanceBetween(userLatLng, stationLatLng) };
-    })
+    });
 
     // sort mapped array
     mapped.sort(function(a, b) {
       if (a.value > b.value) {
         return 1;
-      }
+      };
       if (a.value < b.value) {
         return -1;
-      }
+      };
       return 0;
     });
 
@@ -289,12 +293,10 @@ function getClosestStations(latLng) {
     // return the three closest stations
     for(let i = 0; i < 3; i++){
       result[i] = sortedStations[i];
-    }
+    };
   };
-
   return result;
 };
-
 
 function listClosestStations(stationsObject, markerArray){
 
@@ -306,10 +308,10 @@ function listClosestStations(stationsObject, markerArray){
     stationsListItem.setAttribute("id", `btn-${objectKey}`);
     stationsListItem.setAttribute("value", `${objectKey}`);
     stationsListItem.innerHTML = [
-      `<p>${stationsObject[index].properties.name}</p>`,
-      `<p>address: ${stationsObject[index].properties.addressStreet}</p>`,
-      `<p>bikes available: ${stationsObject[index].properties.bikesAvailable}</p>`,
-      `<p>open docks: ${stationsObject[index].properties.docksAvailable}</p>`,
+      `<strong>${stationsObject[index].properties.name}</strong>`,
+      `<p>${stationsObject[index].properties.addressStreet}</p>`,
+      `<span>bikes available: ${stationsObject[index].properties.bikesAvailable}</span> | `,
+      `<span>open docks: ${stationsObject[index].properties.docksAvailable}</span>`,
     ].join('');
     stationsList.appendChild(stationsListItem);
 
@@ -332,7 +334,6 @@ function listClosestStations(stationsObject, markerArray){
 };
 
 function markClosestStations(latLng, stationsObject){
-  console.log(stationsObject);
   let markerArray = [];
   // mark the user's location
   let userMarker = new google.maps.Marker({
@@ -360,14 +361,19 @@ function markClosestStations(latLng, stationsObject){
             title: `Closest station ${index}`
     });
 
-    // add a helper function to zoom in on each marker
-    marker.addListener('click', function() {
-          map.setZoom(14);
-          map.setCenter(marker.getPosition());
-    });
-
     // add each marker to the master list of markers
     markerArray.push(marker);
+
+    // click on a marker -> highlight a station
+    marker.addListener('click', function() {
+
+      // toggle "active" class for styling
+      let active = document.querySelector('.active');
+      if (active) {
+        active.classList.remove('active');
+      };
+      document.querySelector(`#btn-${index}`).classList.toggle('active');
+    });
   });
 
   // now for some quality of life map adjustments 😊
@@ -383,8 +389,8 @@ function markClosestStations(latLng, stationsObject){
   // remove one zoom level to unhide any markers from the edges.
   map.setZoom(map.getZoom()-1);
   // set a comfortable zoom
-  if(map.getZoom()> 16){
-    map.setZoom(16);
+  if(map.getZoom()> 15){
+    map.setZoom(15);
   }
   return markerArray;
 };

@@ -1,11 +1,14 @@
-#map {
-  height: 100%;
-  width: 60%;
-  float: right;
+
+* {
+  box-sizing: border-box;
+  border-radius: 4px;
+  list-style-type: none;
+  background-color: rgba(0,0,0,0.1);
 }
+
 html, body {
   height: 100%;
-  margin: 0;
+  margin: 0.1em;
   padding: 0;
 }
 
@@ -17,10 +20,76 @@ p {
   font-family: 'Gentium Basic', serif;
 }
 
+nav {
+  display: inline-block;
+  height: 15%;
+  width: 100%;
+}
+
+section .panel {
+  display: inline-block;
+  margin: 0 auto;
+  width: 48%;
+}
+
+section img {
+  width: 4em;
+  margin-left: 1em;
+}
+
+#weather-box h2 {
+  float: right;
+}
+
+#warning-container {
+  background-color: red;
+  text-align: center;
+}
+
+.map {
+  height: 50%;
+  width: 100%;
+}
+
+.list {
+  height: 50%;
+  display: inline;
+  overflow: scroll;
+}
+
+ul {
+  margin: 0 auto;
+}
+
+li {
+  margin: 0.2em 0;
+  padding: 0.2em;
+}
+
 li.active {
   background-color: grey;
 }
 
-nav.div {
-  display: inline-block;
+@media (min-width: 667px) {
+  body {
+    font-size: 2vw;
+  }
+
+  .panel {
+    display: inline-block;
+    margin: 0 auto;
+    width: 30%;
+  }
+
+  #map {
+    height: 100%;
+    width: 60%;
+    float: left;
+  }
+
+  .list {
+    height: 100%;
+    width: 40%;
+    float: right;
+  }
 }

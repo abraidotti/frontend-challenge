@@ -13,30 +13,29 @@
 <body>
 
   <nav>
-
     <div id="nav-header">
-      <p>Philly Bike Finder</p>
+      <h1>Philly Bike Finder</h1>
+      <p>Find the closest Indego bike stations!</p>
     </div>
+  </nav>
 
     <div id="location-form-container">
       <form id="location-form" method="post" action="/">
-        <input id="location-input" type="text" name="location" placeholder="Please input a location.">
+        <input id="location-input" type="text" size="25" name="location" placeholder="Input your location or address.">
         <input id="location-button" type="button" value="submit">
         <div id="error-container"></div>
       </form>
     </div>
 
-  </nav>
+  <section>
+    <div id="weather-container" class="panel"></div>
+    <div id="message-container" class="panel"></div>
+    <div id="warning-container"></div>
+  </section>
 
-  <div id="weather-container"></div>
-
-  <div id="message-container"></div>
-
-  <div id="map"></div>
-
-  <div id="stations-container">
-    <ul id="stations-list">
-    </ul>
+  <div id="map" class="map"></div>
+  <div id="stations-container" class="list">
+    <ul id="stations-list"></ul>
   </div>
 
   <script src="./data/indego.json"></script>
