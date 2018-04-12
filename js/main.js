@@ -1,5 +1,7 @@
 (function() {
 
+const APIKEY = 'd9999db4a33a6a734f1a2e0a30556290';
+
 const locationFormContainer = document.querySelector("#location-form-container");
 const locationInput = document.querySelector("#location-input");
 const locationButton = document.querySelector("#location-button");
@@ -50,18 +52,8 @@ locationButton.addEventListener('click', function(event) {
           // draw map
           initMap(userLatLng);
 
-          // grab closest stations
-          let closestStations = getClosestStations(userLatLng);
-          console.log('closest stations: ');
-          console.log(closestStations);
-
-          // add user and closest station markers to map
-          let markers = markClosestStations(userLatLng, closestStations);
-          console.log('markers: ');
-          console.log(markers);
-
-          // render a list of closest stations
-          listClosestStations(closestStations, markers);
+          // get all stations
+          let stations = promiseToGetStations(userLatLng);
 
         } else {
           // let the user try again
@@ -91,7 +83,7 @@ function promiseToGetWeather(){
   .catch(function(error) {
     console.error(error);
   });
-}
+};
 
 function renderForecast(forecast){
   let weatherBox = document.createElement("DIV");
@@ -125,7 +117,7 @@ function renderForecast(forecast){
 };
 
 function getForecast(){
-  return fetch('http://api.openweathermap.org/data/2.5/weather?q=Philadelphia,USA&APPID=d9999db4a33a6a734f1a2e0a30556290')
+  return fetch(`http://api.openweathermap.org/data/2.5/weather?q=Philadelphia,USA&APPID=${APIKEY}`)
   .then(function(response) {
       if (response.ok) {
         return response.json();
@@ -224,22 +216,54 @@ function initMap(latLng) {
   });
 };
 
-function getClosestStations(latLng) {
+function promiseToGetStations(latLng){
+  new Promise(function(resolve) {
+    setTimeout(function() {
+      stations = getStations();
+      resolve(stations);
+    }, 300);
+  })
+  .then(function(stations){
+    setTimeout(function() {
+      let closestStations = getClosestStations(latLng, stations);
+      let closestStationsMarkers = markClosestStations(latLng, closestStations);
+      listClosestStations(closestStations, closestStationsMarkers);
+      console.log('Stations rendered.');
+    }, 300);
+  })
+  .catch(function(error) {
+    console.error(error);
+  });
+};
+
+function getStations(){
+  return fetch('https://www.rideindego.com/stations/json/')
+  .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      }
+  })
+  .catch(function(error) {
+    console.error(error)
+  });
+};
+
+function getClosestStations(latLng, stationsObject) {
   let userLatLng = new google.maps.LatLng(latLng[0], latLng[1]);
   let result = [];
 
   // first try to get all Indego stations within walking distance
-  for (let station in stations.features) {
+  for (let station in stationsObject.features) {
     let stationLatLng = new google.maps.LatLng(
-      stations.features[station].geometry.coordinates[1],
-      stations.features[station].geometry.coordinates[0]
+      stationsObject.features[station].geometry.coordinates[1],
+      stationsObject.features[station].geometry.coordinates[0]
     );
 
     let distance = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, stationLatLng);
 
     // grab all Indego stations within one kilometer
     if (distance < 1000) {
-      result.push(stations.features[station])
+      result.push(stationsObject.features[station])
     };
   };
 
@@ -264,10 +288,10 @@ function getClosestStations(latLng) {
 
     // no stations found within 1km, so let's grab the closest by distance
     // map stations to a temporary array with index and sort value
-    let mapped = stations.features.map(function(station, index) {
+    let mappedStations = stationsObject.features.map(function(station, index) {
       let stationLatLng = new google.maps.LatLng(
-        stations.features[index].geometry.coordinates[1],
-        stations.features[index].geometry.coordinates[0]
+        stationsObject.features[index].geometry.coordinates[1],
+        stationsObject.features[index].geometry.coordinates[0]
       );
 
       // sort value with Google Maps API's distance calculation
@@ -275,20 +299,21 @@ function getClosestStations(latLng) {
     });
 
     // sort mapped array
-    mapped.sort(function(a, b) {
-      if (a.value > b.value) {
-        return 1;
-      };
-      if (a.value < b.value) {
-        return -1;
-      };
-      return 0;
-    });
+    let sortedStations = mappedStations
+      .sort(function(a, b) {
+        if (a.value > b.value) {
+          return 1;
+        };
+        if (a.value < b.value) {
+          return -1;
+        };
+        return 0;
+      })
+      .map(function(station){
+        return stationsObject.features[station.index];
+      });
 
-    // hold array of stations sorted by distance
-    let sortedStations = mapped.map(function(station){
-      return stations.features[station.index];
-    });
+
 
     // return the three closest stations
     for(let i = 0; i < 3; i++){
@@ -296,41 +321,6 @@ function getClosestStations(latLng) {
     };
   };
   return result;
-};
-
-function listClosestStations(stationsObject, markerArray){
-
-  // iterate through each closest station
-  Object.keys(stationsObject).map(function(objectKey, index) {
-    let stationsListItem = document.createElement("LI");
-
-    // set up the html element and add it to the DOM
-    stationsListItem.setAttribute("id", `btn-${objectKey}`);
-    stationsListItem.setAttribute("value", `${objectKey}`);
-    stationsListItem.innerHTML = [
-      `<strong>${stationsObject[index].properties.name}</strong>`,
-      `<p>${stationsObject[index].properties.addressStreet}</p>`,
-      `<span>bikes available: ${stationsObject[index].properties.bikesAvailable}</span> | `,
-      `<span>open docks: ${stationsObject[index].properties.docksAvailable}</span>`,
-    ].join('');
-    stationsList.appendChild(stationsListItem);
-
-    // add a click listener to each list item
-    stationsListItem.addEventListener('click', function(){
-        // toggle "active" class for styling
-        let active = document.querySelector('.active');
-        if (active) {
-          active.classList.remove('active');
-          markerArray[index+1].setAnimation(null);
-        }
-        event.currentTarget.classList.toggle('active');
-        // make the marker bounce for 3 seconds
-        markerArray[index+1].setAnimation(google.maps.Animation.BOUNCE);
-        window.setTimeout(function() {
-          markerArray[index+1].setAnimation(null);
-        }, 2000);
-    })
-  });
 };
 
 function markClosestStations(latLng, stationsObject){
@@ -394,5 +384,41 @@ function markClosestStations(latLng, stationsObject){
   }
   return markerArray;
 };
+
+function listClosestStations(stationsObject, markerArray){
+  // iterate through each closest station
+  Object.keys(stationsObject).map(function(objectKey, index) {
+    let stationsListItem = document.createElement("LI");
+
+    // set up the html element and add it to the DOM
+    stationsListItem.setAttribute("id", `btn-${objectKey}`);
+    stationsListItem.setAttribute("value", `${objectKey}`);
+    stationsListItem.innerHTML = [
+      `<strong>${stationsObject[index].properties.name}</strong>`,
+      `<p>${stationsObject[index].properties.addressStreet}</p>`,
+      `<span>bikes available: ${stationsObject[index].properties.bikesAvailable}</span> | `,
+      `<span>open docks: ${stationsObject[index].properties.docksAvailable}</span>`,
+    ].join('');
+    stationsList.appendChild(stationsListItem);
+
+    // add a click listener to each list item
+    stationsListItem.addEventListener('click', function(){
+        // toggle "active" class for styling
+        let active = document.querySelector('.active');
+        if (active) {
+          active.classList.remove('active');
+          markerArray[index+1].setAnimation(null);
+        }
+        event.currentTarget.classList.toggle('active');
+        // make the marker bounce for 3 seconds
+        markerArray[index+1].setAnimation(google.maps.Animation.BOUNCE);
+        window.setTimeout(function() {
+          markerArray[index+1].setAnimation(null);
+        }, 2000);
+    })
+  });
+};
+
+
 
 })();

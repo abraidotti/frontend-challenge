@@ -19,6 +19,7 @@
     </div>
   </nav>
 
+  <section>
     <div id="location-form-container">
       <form id="location-form" method="post" action="/">
         <input id="location-input" type="text" size="25" name="location" placeholder="Input your location or address.">
@@ -26,19 +27,21 @@
         <div id="error-container"></div>
       </form>
     </div>
-
-  <section>
     <div id="weather-container" class="panel"></div>
-    <div id="message-container" class="panel"></div>
-    <div id="warning-container"></div>
   </section>
 
+  <div id="warning-container"></div>
+
   <div id="map" class="map"></div>
+  <div id="message-container"></div>
   <div id="stations-container" class="list">
     <ul id="stations-list"></ul>
   </div>
 
-  <script src="./data/indego.json"></script>
+  <footer>
+    <p>&copy Sandro</p>
+  </footer>
+
   <script src="./js/main.js"></script>
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC87bAzg2HQb3-tE6uUeib_10VMmMdU1kY&libraries=geometry">
   </script>

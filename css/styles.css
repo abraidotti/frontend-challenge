@@ -3,7 +3,7 @@
   box-sizing: border-box;
   border-radius: 4px;
   list-style-type: none;
-  background-color: rgba(0,0,0,0.1);
+  background-color: HSLA(214, 26%, 19%, 0.1);
 }
 
 html, body {
@@ -22,14 +22,15 @@ p {
 
 nav {
   display: inline-block;
+  margin: auto;
   height: 15%;
   width: 100%;
 }
 
 section .panel {
   display: inline-block;
+  width: 100%;
   margin: 0 auto;
-  width: 48%;
 }
 
 section img {
@@ -70,6 +71,12 @@ li.active {
   background-color: grey;
 }
 
+footer {
+   position: relative;
+   width: 100%;
+   height: 2vh;
+}
+
 @media (min-width: 667px) {
   body {
     font-size: 2vw;
@@ -78,7 +85,13 @@ li.active {
   .panel {
     display: inline-block;
     margin: 0 auto;
-    width: 30%;
+    width: 48%;
+    float: left;
+  }
+
+  .panel h2 {
+    font-size: 3em;
+    margin-right: 1em;
   }
 
   #map {
@@ -92,4 +105,5 @@ li.active {
     width: 40%;
     float: right;
   }
+
 }
