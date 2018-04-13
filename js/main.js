@@ -32,15 +32,14 @@ locationButton.addEventListener('click', function(event) {
 
         // check if the address is in Philly proper
         if (results[0].formatted_address.includes('Philadelphia, PA')){
-
-          let map;
+          console.log('Location found and validated.');
 
           // clear DOM elements
           stationsList.innerHTML = '';
           weatherContainer.innerHTML = '';
           messageContainer.innerHTML = '';
 
-          console.log('Location found and validated.');
+          let map;
           let userLatLng = [
             results[0].geometry.location.lat(),
             results[0].geometry.location.lng()
@@ -66,7 +65,7 @@ locationButton.addEventListener('click', function(event) {
     });
   } else {
     // no blank submissions please
-    console.log('No location submitted.');
+    errorContainer.innerHTML = ('<p>No location submitted.</p>');
   }
 });
 
@@ -90,7 +89,7 @@ function renderForecast(forecast){
 
   // set up the html element and add it to the DOM
   weatherBox.setAttribute("id", "weather-box");
-  console.log("forecast: ");
+  console.log("Forecast data: ");
   console.log(forecast);
 
   // smooth out weather conditions and temperature
@@ -101,16 +100,17 @@ function renderForecast(forecast){
   weatherBox.innerHTML = [
     `<img src=http://openweathermap.org/img/w/${forecast.weather[0].icon}.png alt="weather icon">`,
     `<h2>${temp}°</h2>`,
-    `<p>${conditions} today.</p>`,
   ].join("");
   weatherContainer.appendChild(weatherBox);
   console.log('Weather rendered.');
 
+  // check for bad weather
+  // add <'04' || > in front of arguments to test
   if (forecast.weather[0].icon.includes('09' || '10' || '11' || '13')) {
     let messageBox = document.createElement("DIV");
     messageBox.setAttribute('id', 'weather-message');
     messageBox.setAttribute('class', 'message-warning');
-    messageBox.innerHTML = ('<h2>Stay alert for bad weather!</h2>');
+    messageBox.innerHTML = (`<h2>${conditions} today.</h2>`);
     warningContainer.appendChild(messageBox);
     console.log('Weather warning rendered.');
   };
@@ -249,6 +249,9 @@ function getStations(){
 };
 
 function getClosestStations(latLng, stationsObject) {
+  // clear the message container
+  messageContainer.innerHTML = '';
+
   let userLatLng = new google.maps.LatLng(latLng[0], latLng[1]);
   let result = [];
 
@@ -271,21 +274,13 @@ function getClosestStations(latLng, stationsObject) {
     let messageBox = document.createElement('DIV');
     messageBox.setAttribute('class', 'message-friendly');
     messageBox.innerHTML = [
-      `<p>${result.length} stations found within walking distance!</p>`,
+      `<p>${result.length} stations found within walking distance.</p>`,
       `<p>Click on a station below to highlight it on the map.</p>`
     ].join('');
     messageContainer.appendChild(messageBox);
   };
 
   if (result.length <= 2) {
-    let messageBox = document.createElement('DIV');
-    messageBox.setAttribute('class', 'message-warning');
-    messageBox.innerHTML = [
-      '<p>Three closest stations found.</p>',
-      '<p>Click on a station below to highlight it on the map.</p>'
-    ].join('');
-    messageContainer.appendChild(messageBox);
-
     // no stations found within 1km, so let's grab the closest by distance
     // map stations to a temporary array with index and sort value
     let mappedStations = stationsObject.features.map(function(station, index) {
@@ -313,22 +308,36 @@ function getClosestStations(latLng, stationsObject) {
         return stationsObject.features[station.index];
       });
 
-
-
-    // return the three closest stations
-    for(let i = 0; i < 3; i++){
+    // return a number of closest stations
+    let closestStationCount = 3;
+    // prepare to return this number of stations
+    for(let i = 0; i < closestStationCount; i++){
       result[i] = sortedStations[i];
     };
+
+    // Render quantity of stations found to DOM
+    let messageBox = document.createElement('DIV');
+    messageBox.setAttribute('class', 'message');
+    messageBox.innerHTML = [
+      `<p>These ${closestStationCount} stations are closest to you.</p>`,
+      '<p>Click on a station below to highlight it on the map.</p>'
+    ].join('');
+    messageContainer.appendChild(messageBox);
   };
+
   return result;
 };
 
 function markClosestStations(latLng, stationsObject){
+  console.log('Stations to be marked:');
+  console.log(stationsObject);
+
   let markerArray = [];
   // mark the user's location
   let userMarker = new google.maps.Marker({
           position: {lat: latLng[0], lng:latLng[1]},
           map: map,
+          icon: 'http://maps.google.com/mapfiles/kml/pal2/icon2.png',
           title: 'User Marker'
         });
 
@@ -342,12 +351,19 @@ function markClosestStations(latLng, stationsObject){
       lng: stationsObject[index].geometry.coordinates[0]
     };
 
-    let bikes = `${stationsObject[index].properties.bikesAvailable}`;
+    let bikes = stationsObject[index].properties.bikesAvailable;
+    let docks = stationsObject[index].properties.docksAvailable;
+
+    // change the icon if few bikes or docks available
+    let icon = 'http://maps.google.com/mapfiles/ms/micons/cycling.png';
+    if (bikes <= 3 || docks <= 3) {
+      icon = 'http://maps.google.com/mapfiles/kml/pal3/icon41.png'
+    };
 
     let marker = new google.maps.Marker({
             position: coordinates,
             map: map,
-            label: bikes,
+            icon: icon,
             title: `Closest station ${index}`
     });
 
@@ -356,7 +372,6 @@ function markClosestStations(latLng, stationsObject){
 
     // click on a marker -> highlight a station
     marker.addListener('click', function() {
-
       // toggle "active" class for styling
       let active = document.querySelector('.active');
       if (active) {
@@ -386,6 +401,9 @@ function markClosestStations(latLng, stationsObject){
 };
 
 function listClosestStations(stationsObject, markerArray){
+  // clear the stations list DOM element
+  stationsList.innerHTML = '';
+
   // iterate through each closest station
   Object.keys(stationsObject).map(function(objectKey, index) {
     let stationsListItem = document.createElement("LI");
@@ -394,31 +412,29 @@ function listClosestStations(stationsObject, markerArray){
     stationsListItem.setAttribute("id", `btn-${objectKey}`);
     stationsListItem.setAttribute("value", `${objectKey}`);
     stationsListItem.innerHTML = [
-      `<strong>${stationsObject[index].properties.name}</strong>`,
+      `<h4>${stationsObject[index].properties.name}</h4>`,
       `<p>${stationsObject[index].properties.addressStreet}</p>`,
-      `<span>bikes available: ${stationsObject[index].properties.bikesAvailable}</span> | `,
-      `<span>open docks: ${stationsObject[index].properties.docksAvailable}</span>`,
+      `<p><span>bikes available: ${stationsObject[index].properties.bikesAvailable}</span> | `,
+      `<span>open docks: ${stationsObject[index].properties.docksAvailable}</span></p>`,
     ].join('');
     stationsList.appendChild(stationsListItem);
 
     // add a click listener to each list item
     stationsListItem.addEventListener('click', function(){
-        // toggle "active" class for styling
-        let active = document.querySelector('.active');
-        if (active) {
-          active.classList.remove('active');
-          markerArray[index+1].setAnimation(null);
-        }
-        event.currentTarget.classList.toggle('active');
-        // make the marker bounce for 3 seconds
-        markerArray[index+1].setAnimation(google.maps.Animation.BOUNCE);
-        window.setTimeout(function() {
-          markerArray[index+1].setAnimation(null);
-        }, 2000);
+      // toggle "active" class for styling
+      let active = document.querySelector('.active');
+      if (active) {
+        active.classList.remove('active');
+        markerArray[index+1].setAnimation(null);
+      }
+      event.currentTarget.classList.toggle('active');
+      // make the marker bounce for 3 seconds
+      markerArray[index+1].setAnimation(google.maps.Animation.BOUNCE);
+      window.setTimeout(function() {
+        markerArray[index+1].setAnimation(null);
+      }, 2000);
     })
   });
 };
-
-
 
 })();

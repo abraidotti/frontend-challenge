@@ -13,14 +13,14 @@
 <body>
 
   <nav>
-    <div id="nav-header">
+    <div>
       <h1>Philly Bike Finder</h1>
       <p>Find the closest Indego bike stations!</p>
     </div>
   </nav>
 
   <section>
-    <div id="location-form-container">
+    <div id="location-form-container" class="panel">
       <form id="location-form" method="post" action="/">
         <input id="location-input" type="text" size="25" name="location" placeholder="Input your location or address.">
         <input id="location-button" type="button" value="submit">
@@ -28,6 +28,7 @@
       </form>
     </div>
     <div id="weather-container" class="panel"></div>
+
   </section>
 
   <div id="warning-container"></div>
@@ -39,7 +40,10 @@
   </div>
 
   <footer>
-    <p>&copy Sandro</p>
+    <p>
+      <span>&copy Sandro Braidotti | </span>
+      <a href="http://www.github.com/abraidotti/frontend-challenge">Github repo</a>
+    </p>
   </footer>
 
   <script src="./js/main.js"></script>
