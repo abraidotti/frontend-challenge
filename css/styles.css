@@ -78,7 +78,7 @@ section img {
 .list {
   height: 50%;
   display: inline-block;
-  overflow: scroll;
+  overflow: auto;
 }
 
 ul {
@@ -104,8 +104,9 @@ footer {
   width: 100%;
   margin: 0 auto;
   bottom: 0;
-  background-color: #efefef;
-  text-align: center;
+  text-align: right;
+  text-decoration: none;
+  background-color: HSLA(186, 60%, 48%, 0.3);
 }
 
 @media (min-width: 667px) {
@@ -138,7 +139,7 @@ footer {
   }
 
   .list {
-    height: 75%;
+    height: 68%;
     width: 40%;
     float: right;
   }
@@ -147,8 +148,6 @@ footer {
     position: absolute;
     height: 2em;
     bottom: -17em;
-    text-decoration: none;
-    background-color: HSLA(186, 60%, 48%, 0.3);
   }
 
 }
