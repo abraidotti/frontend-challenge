@@ -147,6 +147,8 @@ footer {
     position: absolute;
     height: 2em;
     bottom: -17em;
+    text-decoration: none;
+    background-color: HSLA(186, 60%, 48%, 0.3);
   }
 
 }
