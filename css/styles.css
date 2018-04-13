@@ -78,7 +78,7 @@ section img {
 .list {
   height: 50%;
   display: inline-block;
-  overflow: scroll;
+  overflow: auto;
 }
 
 ul {
@@ -138,7 +138,7 @@ footer {
   }
 
   .list {
-    height: 75%;
+    height: 68%;
     width: 40%;
     float: right;
   }
